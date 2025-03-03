@@ -1,37 +1,34 @@
-// Список вкладок
-const tabs = ['dashboard', 'map', 'shipments', 'analytics', 'globe'];
-let activeTab = 'dashboard';
-
-// Функция для переключения вкладок
-function setActiveTab(tab) {
-    activeTab = tab;
-    tabs.forEach(t => {
-        document.getElementById(t).classList.add('hidden');
-    });
-    document.getElementById(tab).classList.remove('hidden');
+/* Темный режим */
+body.dark {
+    background-color: #1f2937;
+    color: #ffffff;
 }
 
-// Назначение обработчиков событий для кнопок боковой панели
-document.querySelectorAll('aside button').forEach((button, index) => {
-    button.addEventListener('click', () => setActiveTab(tabs[index]));
-});
+body.dark header, body.dark aside {
+    background-color: #374151;
+    border-color: #4b5563;
+}
 
-// Переключение темного режима
-let darkMode = false;
-document.querySelector('.dark-mode-button').addEventListener('click', () => {
-    darkMode = !darkMode;
-    document.body.classList.toggle('dark');
-    // Обновление классов для элементов в зависимости от темы
-    document.querySelector('header').classList.toggle('dark:bg-gray-800');
-    document.querySelector('aside').classList.toggle('dark:bg-gray-800');
-});
+body.dark .bg-white {
+    background-color: #374151;
+}
 
-// Уведомление через 3 секунды
-setTimeout(() => {
-    alert('Новое уведомление: Поступила новая заявка на перевозку!');
-}, 3000);
+body.dark .text-gray-500 {
+    color: #9ca3af;
+}
 
-// Здесь можно добавить дополнительную логику, например:
-// - Отрисовка графиков с использованием Chart.js
-// - Генерация SVG для карты США
-// - Динамическое создание таблицы shipments
+body.dark .text-gray-700 {
+    color: #d1d5db;
+}
+
+body.dark .bg-gray-50 {
+    background-color: #4b5563;
+}
+
+body.dark .bg-gray-100:hover {
+    background-color: #2d3748;
+}
+
+body.dark .divide-gray-200 > * + * {
+    border-color: #4b5563;
+}
