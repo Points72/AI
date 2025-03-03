@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logistics Dashboard</title>
-    <!-- Подключение Tailwind CSS через CDN -->
+    <!-- Tailwind CSS через CDN -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Подключение пользовательских стилей -->
+    <!-- Пользовательские стили -->
     <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js через CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
     <div class="flex flex-col h-screen">
@@ -15,7 +17,6 @@
         <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
             <div class="flex items-center">
                 <button class="mr-4 p-1 rounded hover:bg-gray-100">
-                    <!-- Здесь должен быть SVG-иконка Layers -->
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
@@ -23,20 +24,12 @@
                 <h1 class="text-xl font-bold">LogistiX Dashboard</h1>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="p-2 rounded-full hover:bg-gray-100 relative notification-button">
-                    <!-- SVG-иконка AlertTriangle -->
+                <button class="p-2 rounded-full hover:bg-gray-100 notification-button">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 3h.01M12 3a9 9 0 110 18 9 9 0 010-18z"></path>
                     </svg>
                 </button>
-                <button class="p-2 rounded-full hover:bg-gray-100">
-                    <!-- SVG-иконка Search -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </button>
                 <button class="p-2 rounded-full hover:bg-gray-100 dark-mode-button">
-                    <!-- SVG-иконка Sun/Moon -->
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
                     </svg>
@@ -53,40 +46,61 @@
             <aside class="bg-white border-r border-gray-200 w-56">
                 <nav class="p-4">
                     <ul class="space-y-2">
-                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Dashboard</span></button></li>
-                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">USA Map</span></button></li>
-                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Shipments</span></button></li>
-                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Analytics</span></button></li>
-                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Global</span></button></li>
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100" onclick="setActiveTab('dashboard')">Dashboard</button></li>
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100" onclick="setActiveTab('shipments')">Shipments</button></li>
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100" onclick="setActiveTab('analytics')">Analytics</button></li>
                     </ul>
                 </nav>
             </aside>
             <!-- Главная область -->
             <main class="flex-1 overflow-auto p-6">
+                <!-- Dashboard -->
                 <div id="dashboard" class="space-y-6">
-                    <h2 class="text-2xl font-semibold">Добро пожаловать в Dashboard</h2>
-                    <!-- Здесь будет контент Dashboard -->
+                    <h2 class="text-2xl font-semibold">Dashboard</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <p class="text-gray-500 text-sm">Активные перевозки</p>
+                            <p class="text-2xl font-bold">42</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-medium mb-4">Активность перевозок</h3>
+                        <canvas id="activityChart" class="w-full h-72"></canvas>
+                    </div>
                 </div>
-                <div id="map" class="space-y-6 hidden">
-                    <h2 class="text-2xl font-semibold">USA Map</h2>
-                    <!-- Здесь будет карта -->
-                </div>
+                <!-- Shipments -->
                 <div id="shipments" class="space-y-6 hidden">
                     <h2 class="text-2xl font-semibold">Shipments</h2>
-                    <!-- Здесь будет таблица shipments -->
+                    <div class="overflow-x-auto bg-white rounded-lg shadow">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Маршрут</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shipmentsTable" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
                 </div>
+                <!-- Analytics -->
                 <div id="analytics" class="space-y-6 hidden">
                     <h2 class="text-2xl font-semibold">Analytics</h2>
-                    <!-- Здесь будут графики -->
-                </div>
-                <div id="globe" class="space-y-6 hidden">
-                    <h2 class="text-2xl font-semibold">Global</h2>
-                    <!-- Здесь будет глобальная карта -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-lg font-medium mb-4">Распределение по регионам</h3>
+                            <canvas id="regionChart" class="w-full h-72"></canvas>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-lg font-medium mb-4">Доход по категориям</h3>
+                            <canvas id="revenueChart" class="w-full h-72"></canvas>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>
     </div>
-    <!-- Подключение JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
