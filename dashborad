@@ -1,457 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { Truck, Clock, AlertTriangle, Zap, CheckCircle, MapPin, Droplets, Thermometer, DollarSign, TrendingUp, TrendingDown, Wind, Search, User, LogOut, BarChart2, Star, RefreshCw, Map, Layers, Globe, Activity, Sun, Moon } from 'lucide-react';
-
-// Основной компонент дашборда
-const LogisticsDashboard = () => {
-  // Состояния для интерактивных элементов
-  const [selectedState, setSelectedState] = useState(null);
-  const [selectedShipmentId, setSelectedShipmentId] = useState(null); // Changed from selectedTruck to selectedShipmentId
-  const [showingAIMatching, setShowingAIMatching] = useState(false);
-  const [showReroute, setShowReroute] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [showNotification, setShowNotification] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  
-  // Имитация автоматического появления уведомления
-  useEffect(() => {
-    const timer = setTimeout(() => setShowNotification(true), 3000);
-    return () => clearTimeout(timer);
-  }, []);
-  
-  // Имитация обновления данных транспортных потоков в реальном времени
-  const [flowData, setFlowData] = useState([]);
-  
-  useEffect(() => {
-    setFlowData(transportFlowData);
-    const interval = setInterval(() => {
-      setFlowData(prev => prev.map(flow => ({
-        ...flow,
-        volume: Math.max(2500, Math.min(6000, flow.volume + Math.floor(Math.random() * 300) - 150)),
-        growth: parseFloat((flow.growth + (Math.random() * 0.04 - 0.02)).toFixed(2))
-      })));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-  
-  // Расчетное время прибытия
-  const calculateETA = () => {
-    const now = new Date();
-    const arrival = new Date(now.getTime() + 5 * 60 * 60 * 1000); // +5 часов
-    return arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-  
-  // Данные о текущих активных перевозках
-  const activeShipments = [
-    { id: 'SH-89042', origin: 'Chicago, IL', destination: 'Dallas, TX', status: 'In Transit', eta: calculateETA(), distance: 1478, progress: 62, driver: 'Mike Johnson', cargo: 'Electronics', weight: '12.4t', urgency: 'Normal', risk: 'Low', revenue: 2850 },
-    { id: 'SH-89123', origin: 'New York, NY', destination: 'Miami, FL', status: 'Loading', eta: '18:45', distance: 2102, progress: 5, driver: 'Sarah Wilson', cargo: 'Food Products', weight: '18.7t', urgency: 'High', risk: 'Low', revenue: 3450 },
-    { id: 'SH-89256', origin: 'Los Angeles, CA', destination: 'Phoenix, AZ', status: 'In Transit', eta: '15:20', distance: 598, progress: 78, driver: 'David Martinez', cargo: 'Automotive Parts', weight: '14.2t', urgency: 'Normal', risk: 'Medium', revenue: 1950 },
-    { id: 'SH-89378', origin: 'Seattle, WA', destination: 'Portland, OR', status: 'Delayed', eta: '16:15', distance: 281, progress: 45, driver: 'Karen Thompson', cargo: 'Furniture', weight: '8.5t', urgency: 'High', risk: 'Medium', revenue: 1250 },
-  ];
-  
-  // Рекомендации по загрузке обратных рейсов
-  const backloadRecommendations = [
-    { id: 'BL-5432', origin: 'Dallas, TX', destination: 'Chicago, IL', cargo: 'Retail Goods', weight: '10.2t', matchScore: 92, revenue: 2450, distance: 1478, etaPickup: '08:30 Завтра', carrier: 'FastTruck Logistics' },
-    { id: 'BL-5587', origin: 'Dallas, TX', destination: 'Nashville, TN', cargo: 'Machinery', weight: '15.8t', matchScore: 87, revenue: 2100, distance: 996, etaPickup: '09:45 Завтра', carrier: 'America Express Transport' },
-    { id: 'BL-5611', origin: 'Dallas, TX', destination: 'Kansas City, MO', cargo: 'Paper Products', weight: '8.4t', matchScore: 85, revenue: 1850, distance: 864, etaPickup: '10:30 Завтра', carrier: 'Midwest Carriers' },
-  ];
-  
-  // Данные о критических точках пути
-  const routeWaypoints = [
-    { location: 'Chicago, IL', status: 'Completed', timestamp: '08:30', delayMinutes: 0, fuelLevel: 97, temperature: 23 },
-    { location: 'Indianapolis, IN', status: 'Completed', timestamp: '11:45', delayMinutes: 15, fuelLevel: 78, temperature: 24 },
-    { location: 'St. Louis, MO', status: 'In Progress', timestamp: '14:20', delayMinutes: 0, fuelLevel: 55, temperature: 26 },
-    { location: 'Oklahoma City, OK', status: 'Upcoming', timestamp: '18:40', delayMinutes: 0, fuelLevel: null, temperature: null },
-    { location: 'Dallas, TX', status: 'Destination', timestamp: calculateETA(), delayMinutes: 0, fuelLevel: null, temperature: null },
-  ];
-  
-  // Данные о погоде на маршруте
-  const weatherData = [
-    { location: 'Current Location', condition: 'Sunny', temperature: 76, wind: 8, precipitation: 0, time: 'Now' },
-    { location: 'Oklahoma City, OK', condition: 'Cloudy', temperature: 72, wind: 12, precipitation: 20, time: '+4h' },
-    { location: 'Dallas, TX', condition: 'Rainy', temperature: 68, wind: 15, precipitation: 70, time: '+9h' },
-  ];
-  
-  // Данные о точках отдыха
-  const restStops = [
-    { name: 'TravelCenters of America', distance: 48, amenities: ['Shower', 'Restaurant', 'Wifi', 'Repair'], rating: 4.2, fuelPrice: 3.45, parkingAvailable: 32 },
-    { name: 'Pilot Flying J', distance: 112, amenities: ['Shower', 'Fast Food', 'Wifi', 'Laundry'], rating: 4.5, fuelPrice: 3.49, parkingAvailable: 45 },
-    { name: 'Love\'s Travel Stop', distance: 187, amenities: ['Shower', 'Restaurant', 'Wifi', 'Market'], rating: 4.3, fuelPrice: 3.42, parkingAvailable: 28 },
-  ];
-  
-  // Функция для определения цвета статуса
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'In Transit': return 'bg-blue-100 text-blue-700';
-      case 'Loading': return 'bg-yellow-100 text-yellow-700';
-      case 'Delayed': return 'bg-red-100 text-red-700';
-      case 'Completed': return 'bg-green-100 text-green-700';
-      case 'Upcoming': return 'bg-purple-100 text-purple-700';
-      case 'Destination': return 'bg-indigo-100 text-indigo-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
-  
-  // Данные о маршрутах с координатами (исправлены координаты в формате карты)
-  const routePaths = [
-    [{ x: 0.478, y: 0.34, state: 'Illinois' }, { x: 0.545, y: 0.385, state: 'Indiana' }, { x: 0.575, y: 0.465, state: 'Missouri' }, { x: 0.545, y: 0.585, state: 'Oklahoma' }, { x: 0.545, y: 0.685, state: 'Texas' }],
-    [{ x: 0.885, y: 0.305, state: 'New York' }, { x: 0.855, y: 0.355, state: 'Pennsylvania' }, { x: 0.825, y: 0.405, state: 'District of Columbia' }, { x: 0.795, y: 0.495, state: 'North Carolina' }, { x: 0.745, y: 0.575, state: 'Georgia' }, { x: 0.785, y: 0.795, state: 'Florida' }],
-    [{ x: 0.115, y: 0.575, state: 'California' }, { x: 0.245, y: 0.595, state: 'Arizona' }],
-    [{ x: 0.125, y: 0.205, state: 'Washington' }, { x: 0.135, y: 0.305, state: 'Oregon' }]
-  ];
-  
-  // AI рекомендации для перенаправления маршрута
-  const rerouteOptions = [
-    { id: 'RR-1', name: 'Оптимальный маршрут', description: 'Обход через Springfield, MO', etaImpact: '+45 мин', fuelImpact: '+28 миль', score: 94, reason: 'Закрытие участка I-44 из-за аварии', weatherRisk: 'Низкий', restStopsAvailable: 3 },
-    { id: 'RR-2', name: 'Альтернативный маршрут 1', description: 'Обход через Joplin, MO', etaImpact: '+72 мин', fuelImpact: '+42 миль', score: 86, reason: 'Избегание зоны плохой погоды', weatherRisk: 'Очень низкий', restStopsAvailable: 5 },
-    { id: 'RR-3', name: 'Альтернативный маршрут 2', description: 'Обход через Tulsa, OK', etaImpact: '+95 мин', fuelImpact: '+68 миль', score: 78, reason: 'Минимизация городского трафика', weatherRisk: 'Умеренный', restStopsAvailable: 4 },
-  ];
-  
-  // Данные о датчиках грузовика
-  const truckSensorData = [
-    { name: 'Fuel', value: 55, unit: '%', icon: <DollarSign size={18} />, status: 'normal', min: 0, max: 100 },
-    { name: 'Engine Temp', value: 95, unit: '°C', icon: <Thermometer size={18} />, status: 'normal', min: 75, max: 110 },
-    { name: 'Oil Pressure', value: 42, unit: 'psi', icon: <Droplets size={18} />, status: 'normal', min: 30, max: 70 },
-    { name: 'Battery', value: 12.8, unit: 'V', icon: <Zap size={18} />, status: 'normal', min: 11.8, max: 14.4 },
-    { name: 'AdBlue', value: 62, unit: '%', icon: <Wind size={18} />, status: 'normal', min: 0, max: 100 },
-    { name: 'Tire Pressure', value: 105, unit: 'psi', icon: <CheckCircle size={18} />, status: 'normal', min: 95, max: 115 },
-  ];
-  
-  // Данные о штатах США
-  const usStates = [
-    {id: 'AL', name: 'Alabama', x: 0.66, y: 0.67, active: false},
-    {id: 'AK', name: 'Alaska', x: 0.18, y: 0.15, active: false},
-    {id: 'AZ', name: 'Arizona', x: 0.22, y: 0.60, active: true},
-    // ... остальные штаты остаются без изменений ...
-    {id: 'WY', name: 'Wyoming', x: 0.35, y: 0.35, active: false},
-    {id: 'DC', name: 'District of Columbia', x: 0.82, y: 0.45, active: true},
-  ];
-  
-  // Данные о степени загрузки по штатам
-  const stateLoadData = [
-    {state: 'CA', loads: 1245, capacity: 1500, ratio: 0.83},
-    {state: 'TX', loads: 1826, capacity: 2100, ratio: 0.87},
-    // ... остальные данные остаются без изменений ...
-  ];
-  
-  // Получение данных о загрузке штата
-  const getStateLoadRatio = (stateId) => stateLoadData.find(data => data.state === stateId)?.ratio || 0.5;
-  
-  // Определение цвета штата
-  const getStateColor = (stateId, isActive) => {
-    if (!isActive) return darkMode ? '#2c3440' : '#e5e7eb';
-    const ratio = getStateLoadRatio(stateId);
-    if (ratio > 0.9) return '#ef4444';
-    if (ratio > 0.8) return '#f97316';
-    if (ratio > 0.7) return '#facc15';
-    if (ratio > 0.6) return '#84cc16';
-    return '#22c55e';
-  };
-  
-  // Данные транспортных потоков
-  const transportFlowData = [
-    { name: 'Northeast Corridor', volume: 3856, active: true, growth: 0.15, corridorStart: {x: 0.85, y: 0.29}, corridorEnd: {x: 0.79, y: 0.48}, width: 12 },
-    // ... остальные данные остаются без изменений ...
-  ];
-  
-  // Определение цвета линии потока
-  const getFlowLineColor = (growth) => {
-    if (growth > 0.10) return '#22c55e';
-    if (growth > 0) return '#84cc16';
-    if (growth > -0.05) return '#facc15';
-    return '#ef4444';
-  };
-  
-  // Определение толщины линии потока
-  const getFlowLineWidth = (volume) => 2 + ((volume - 2500) / (6000 - 2500)) * 6;
-  
-  // Рендер карты США с поддержкой выбранного маршрута
-  const renderUSMap = ({ selectedRoute = null } = {}) => {
-    return (
-      <div className="relative w-full h-full">
-        <svg viewBox="0 0 1 1" className="w-full h-full">
-          {usStates.map((state) => (
-            <g key={state.id} onClick={() => setSelectedState(state.id === selectedState ? null : state.id)} className="cursor-pointer transition-colors duration-300">
-              <circle cx={state.x} cy={state.y} r={0.015} fill={state.id === selectedState ? '#3b82f6' : getStateColor(state.id, state.active)} strokeWidth={0.003} stroke={darkMode ? '#1f2937' : '#fff'} className="transition-all duration-300" />
-              <text x={state.x} y={state.y} textAnchor="middle" dy=".3em" fontSize="0.015" fill={darkMode ? '#e5e7eb' : '#1f2937'} fontWeight={state.id === selectedState ? 'bold' : 'normal'} className="pointer-events-none">{state.id}</text>
-            </g>
-          ))}
-          {flowData.map((flow, index) => (
-            <g key={`flow-${index}`} className="pointer-events-none">
-              <line x1={flow.corridorStart.x} y1={flow.corridorStart.y} x2={flow.corridorEnd.x} y2={flow.corridorEnd.y} stroke={getFlowLineColor(flow.growth)} strokeWidth={getFlowLineWidth(flow.volume) * 0.003} strokeDasharray={flow.growth < 0 ? "0.01, 0.01" : "none"} strokeLinecap="round" className="transition-all duration-500" />
-              <circle cx={(flow.corridorStart.x + flow.corridorEnd.x * 3) / 4} cy={(flow.corridorStart.y + flow.corridorEnd.y * 3) / 4} r={0.008} fill={getFlowLineColor(flow.growth)} className="animate-pulse" />
-            </g>
-          ))}
-          {selectedRoute && (
-            <g className="selected-route">
-              <polyline points={selectedRoute.map(point => `${point.x},${point.y}`).join(' ')} stroke="#ff0000" strokeWidth={0.005} fill="none" />
-              {selectedRoute.map((point, index) => (
-                <circle key={index} cx={point.x} cy={point.y} r={0.01} fill="#ff0000" />
-              ))}
-            </g>
-          )}
-        </svg>
-        <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-800 p-2 rounded-md shadow-md text-xs">
-          <div className="font-bold mb-1">Транспортные потоки:</div>
-          <div className="flex items-center mb-1"><div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div><span>Значительный рост (>10%)</span></div>
-          <div className="flex items-center mb-1"><div className="w-3 h-3 rounded-full bg-lime-500 mr-1"></div><span>Умеренный рост (0-10%)</span></div>
-          <div className="flex items-center mb-1"><div className="w-3 h-3 rounded-full bg-yellow-400 mr-1"></div><span>Стабильный поток (0 до -5%)</span></div>
-          <div className="flex items-center"><div className="w-3 h-3 rounded-full bg-red-500 mr-1"></div><span>Падение потока (< -5%)</span></div>
-        </div>
-      </div>
-    );
-  };
-
-  // Получение выбранной перевозки и маршрута
-  const selectedShipment = activeShipments.find(s => s.id === selectedShipmentId);
-  const routeIndex = activeShipments.findIndex(s => s.id === selectedShipmentId);
-  const selectedRoute = routeIndex !== -1 ? routePaths[routeIndex] : null;
-
-  return (
-    <div className={`h-screen flex flex-col ${darkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Верхняя панель */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center">
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="mr-4 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-            <Layers size={24} className="text-gray-700 dark:text-gray-300" />
-          </button>
-          <h1 className="text-xl font-bold">LogistiX Dashboard</h1>
-        </div>
-        <div className="flex items-center space-x-4">
-          <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 relative">
-            <AlertTriangle size={20} className="text-gray-700 dark:text-gray-300" />
-            {showNotification && <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-500"></span>}
-          </button>
-          <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-            <Search size={20} className="text-gray-700 dark:text-gray-300" />
-          </button>
-          <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-            {darkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-700" />}
-          </button>
-          <div className="flex items-center">
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">U</div>
-            <span className="ml-2 text-sm font-medium">User</span>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Боковая панель */}
-        <aside className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all ${sidebarCollapsed ? 'w-16' : 'w-56'}`}>
-          <nav className="p-4">
-            <ul className="space-y-2">
-              <li><button onClick={() => setActiveTab('dashboard')} className={`flex items-center p-2 rounded-md w-full ${activeTab === 'dashboard' ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}><BarChart2 size={20} />{!sidebarCollapsed && <span className="ml-3">Dashboard</span>}</button></li>
-              <li><button onClick={() => setActiveTab('map')} className={`flex items-center p-2 rounded-md w-full ${activeTab === 'map' ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}><Map size={20} />{!sidebarCollapsed && <span className="ml-3">USA Map</span>}</button></li>
-              <li><button onClick={() => setActiveTab('shipments')} className={`flex items-center p-2 rounded-md w-full ${activeTab === 'shipments' ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}><Truck size={20} />{!sidebarCollapsed && <span className="ml-3">Shipments</span>}</button></li>
-              <li><button onClick={() => setActiveTab('analytics')} className={`flex items-center p-2 rounded-md w-full ${activeTab === 'analytics' ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}><Activity size={20} />{!sidebarCollapsed && <span className="ml-3">Analytics</span>}</button></li>
-              <li><button onClick={() => setActiveTab('globe')} className={`flex items-center p-2 rounded-md w-full ${activeTab === 'globe' ? 'bg-blue-500 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}><Globe size={20} />{!sidebarCollapsed && <span className="ml-3">Global</span>}</button></li>
-            </ul>
-          </nav>
-        </aside>
-
-        {/* Основное содержимое */}
-        <main className="flex-1 overflow-auto p-6">
-          {activeTab === 'dashboard' && (
-            <div className="space-y-6">
-              {/* Существующий код dashboard остается без изменений */}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Dashboard</title>
+    <!-- Подключение Tailwind CSS через CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Подключение пользовательских стилей -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <div class="flex flex-col h-screen">
+        <!-- Шапка -->
+        <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+            <div class="flex items-center">
+                <button class="mr-4 p-1 rounded hover:bg-gray-100">
+                    <!-- Здесь должен быть SVG-иконка Layers -->
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <h1 class="text-xl font-bold">LogistiX Dashboard</h1>
             </div>
-          )}
-
-          {activeTab === 'map' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Транспортная карта США в реальном времени</h1>
-                <div className="flex items-center">
-                  <button className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded mr-2"><RefreshCw size={16} className="mr-1" />Обновить данные</button>
-                  <select className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-3 py-1"><option>Все потоки</option><option>Только активные</option><option>Только растущие</option></select>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 rounded-full hover:bg-gray-100 relative notification-button">
+                    <!-- SVG-иконка AlertTriangle -->
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 3h.01M12 3a9 9 0 110 18 9 9 0 010-18z"></path>
+                    </svg>
+                </button>
+                <button class="p-2 rounded-full hover:bg-gray-100">
+                    <!-- SVG-иконка Search -->
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </button>
+                <button class="p-2 rounded-full hover:bg-gray-100 dark-mode-button">
+                    <!-- SVG-иконка Sun/Moon -->
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
+                    </svg>
+                </button>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">U</div>
+                    <span class="ml-2 text-sm font-medium">User</span>
                 </div>
-              </div>
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                <div className="h-96">{renderUSMap()}</div>
-              </div>
-              {/* Существующий код статистики и графиков остается без изменений */}
             </div>
-          )}
-
-          {activeTab === 'shipments' && (
-            <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Активные перевозки</h1>
-              <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
-                <table className="min-w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Маршрут</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Статус</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ETA</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Груз</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Вес</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Водитель</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Прогресс</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {activeShipments.map((shipment) => (
-                      <tr key={shipment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onClick={() => setSelectedShipmentId(shipment.id)}>
-                        <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium">{shipment.id}</div></td>
-                        <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm">{shipment.origin} → {shipment.destination}</div><div className="text-xs text-gray-500 dark:text-gray-400">{shipment.distance} км</div></td>
-                        <td className="px-6 py-4 whitespace-nowrap"><span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(shipment.status)}`}>{shipment.status}</span></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{shipment.eta}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{shipment.cargo}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{shipment.weight}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{shipment.driver}</td>
-                        <td className="px-6 py-4 whitespace-nowrap"><div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded"><div className="h-2 bg-blue-500 rounded" style={{ width: `${shipment.progress}%` }}></div></div><div className="text-xs text-right mt-1">{shipment.progress}%</div></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Детали выбранной перевозки */}
-              {selectedShipmentId && (
-                <div className="mt-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                  <h2 className="text-xl font-bold mb-4">Детали перевозки {selectedShipmentId}</h2>
-                  
-                  {/* Маршрут на карте */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-2">Маршрут</h3>
-                    <div className="h-64 bg-gray-100 dark:bg-gray-700 rounded">{renderUSMap({ selectedRoute })}</div>
-                  </div>
-
-                  {/* Точки пути */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-2">Точки пути</h3>
-                    <table className="min-w-full bg-white dark:bg-gray-800">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-2">Локация</th>
-                          <th className="px-4 py-2">Статус</th>
-                          <th className="px-4 py-2">Время</th>
-                          <th className="px-4 py-2">Задержка (мин)</th>
-                          <th className="px-4 py-2">Уровень топлива (%)</th>
-                          <th className="px-4 py-2">Температура (°C)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {routeWaypoints.map((wp, index) => (
-                          <tr key={index}>
-                            <td className="px-4 py-2">{wp.location}</td>
-                            <td className="px-4 py-2">{wp.status}</td>
-                            <td className="px-4 py-2">{wp.timestamp}</td>
-                            <td className="px-4 py-2">{wp.delayMinutes}</td>
-                            <td className="px-4 py-2">{wp.fuelLevel !== null ? wp.fuelLevel : '-'}</td>
-                            <td className="px-4 py-2">{wp.temperature !== null ? wp.temperature : '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Погода */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-2">Погода на маршруте</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {weatherData.map((weather, index) => (
-                        <div key={index} className="p-4 bg-gray-100 dark:bg-gray-700 rounded">
-                          <p className="font-medium">{weather.location}</p>
-                          <p>{weather.condition}</p>
-                          <p>{weather.temperature}°F</p>
-                          <p>Ветер: {weather.wind} миль/ч</p>
-                          <p>Осадки: {weather.precipitation}%</p>
-                          <p>{weather.time}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Точки отдыха */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-2">Точки отдыха</h3>
-                    <div className="space-y-4">
-                      {restStops.map((stop, index) => (
-                        <div key={index} className="p-4 bg-gray-100 dark:bg-gray-700 rounded">
-                          <p className="font-medium">{stop.name}</p>
-                          <p>Расстояние: {stop.distance} км</p>
-                          <p>Удобства: {stop.amenities.join(', ')}</p>
-                          <p>Рейтинг: {stop.rating}</p>
-                          <p>Цена топлива: ${stop.fuelPrice}/галлон</p>
-                          <p>Свободных мест: {stop.parkingAvailable}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Датчики */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-2">Данные датчиков грузовика</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {truckSensorData.map((sensor, index) => (
-                        <div key={index} className="p-4 bg-gray-100 dark:bg-gray-700 rounded">
-                          <div className="flex items-center">{sensor.icon}<span className="ml-2">{sensor.name}</span></div>
-                          <div className="text-2xl font-bold">{sensor.value}{sensor.unit}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{sensor.status}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Обратные рейсы */}
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-2">Рекомендации по обратным рейсам</h3>
-                    <div className="space-y-4">
-                      {backloadRecommendations.map((rec, index) => (
-                        <div key={index} className="p-4 bg-gray-100 dark:bg-gray-700 rounded">
-                          <p className="font-medium">{rec.origin} → {rec.destination}</p>
-                          <p>Груз: {rec.cargo}</p>
-                          <p>Вес: {rec.weight}</p>
-                          <p>Оценка соответствия: {rec.matchScore}</p>
-                          <p>Доход: ${rec.revenue}</p>
-                          <p>Расстояние: {rec.distance} км</p>
-                          <p>Время забора: {rec.etaPickup}</p>
-                          <p>Перевозчик: {rec.carrier}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Перенаправление */}
-                  <button onClick={() => setShowReroute(!showReroute)} className="bg-blue-500 text-white px-4 py-2 rounded mb-4">
-                    {showReroute ? 'Скрыть варианты перенаправления' : 'Показать варианты перенаправления'}
-                  </button>
-                  {showReroute && (
-                    <div>
-                      <h3 className="text-lg font-medium mb-2">Варианты перенаправления</h3>
-                      <div className="space-y-4">
-                        {rerouteOptions.map((option, index) => (
-                          <div key={index} className="p-4 bg-gray-100 dark:bg-gray-700 rounded">
-                            <p className="font-medium">{option.name}</p>
-                            <p>{option.description}</p>
-                            <p>Влияние на ETA: {option.etaImpact}</p>
-                            <p>Влияние на топливо: {option.fuelImpact}</p>
-                            <p>Оценка: {option.score}</p>
-                            <p>Причина: {option.reason}</p>
-                            <p>Риск погоды: {option.weatherRisk}</p>
-                            <p>Доступных точек отдыха: {option.restStopsAvailable}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+        </header>
+        <!-- Основной контент -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Боковая панель -->
+            <aside class="bg-white border-r border-gray-200 w-56">
+                <nav class="p-4">
+                    <ul class="space-y-2">
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Dashboard</span></button></li>
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">USA Map</span></button></li>
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Shipments</span></button></li>
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Analytics</span></button></li>
+                        <li><button class="flex items-center p-2 rounded-md w-full text-gray-700 hover:bg-gray-100"><span class="ml-3">Global</span></button></li>
+                    </ul>
+                </nav>
+            </aside>
+            <!-- Главная область -->
+            <main class="flex-1 overflow-auto p-6">
+                <div id="dashboard" class="space-y-6">
+                    <h2 class="text-2xl font-semibold">Добро пожаловать в Dashboard</h2>
+                    <!-- Здесь будет контент Dashboard -->
                 </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'analytics' && (
-            <div className="space-y-6">
-              {/* Существующий код analytics остается без изменений */}
-            </div>
-          )}
-        </main>
-      </div>
+                <div id="map" class="space-y-6 hidden">
+                    <h2 class="text-2xl font-semibold">USA Map</h2>
+                    <!-- Здесь будет карта -->
+                </div>
+                <div id="shipments" class="space-y-6 hidden">
+                    <h2 class="text-2xl font-semibold">Shipments</h2>
+                    <!-- Здесь будет таблица shipments -->
+                </div>
+                <div id="analytics" class="space-y-6 hidden">
+                    <h2 class="text-2xl font-semibold">Analytics</h2>
+                    <!-- Здесь будут графики -->
+                </div>
+                <div id="globe" class="space-y-6 hidden">
+                    <h2 class="text-2xl font-semibold">Global</h2>
+                    <!-- Здесь будет глобальная карта -->
+                </div>
+            </main>
+        </div>
     </div>
-  );
-};
-
-export default LogisticsDashboard;
+    <!-- Подключение JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
